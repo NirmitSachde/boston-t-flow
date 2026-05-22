@@ -39,6 +39,12 @@ const modeLive = $('modeLive');
 const statsLive = $('statsLive');
 const liveFresh = $('liveFresh');
 const liveCountdown = $('liveCountdown');
+
+// Mobile duplicates (in player footer, visible on small screens)
+const modeScheduleMob = $('modeScheduleMob');
+const modeLiveMob = $('modeLiveMob');
+const statsLiveMob = $('statsLiveMob');
+const liveFreshMob = $('liveFreshMob');
 const alertBanner = $('alertBanner');
 const alertText = $('alertText');
 const alertCount = $('alertCount');
@@ -315,22 +321,45 @@ function scrubTo(clientX) {
   const frac = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
   anim.setTime(frac * 86400);
 }
-timelineTrack.addEventListener('mousedown', (e) => {
+function startScrub(clientX) {
   scrubbing = true;
   anim.setPlaying(false);
   playIcon.style.display = '';
   pauseIcon.style.display = 'none';
-  scrubTo(e.clientX);
-});
+  scrubTo(clientX);
+}
+
+// Mouse scrubbing
+timelineTrack.addEventListener('mousedown', (e) => startScrub(e.clientX));
 window.addEventListener('mousemove', (e) => { if (scrubbing) scrubTo(e.clientX); });
 window.addEventListener('mouseup', () => { scrubbing = false; });
 
-// ---------- Mode toggle ----------
+// Touch scrubbing
+timelineTrack.addEventListener('touchstart', (e) => {
+  startScrub(e.touches[0].clientX);
+  e.preventDefault();
+}, { passive: false });
+window.addEventListener('touchmove', (e) => {
+  if (scrubbing) {
+    scrubTo(e.touches[0].clientX);
+    e.preventDefault();
+  }
+}, { passive: false });
+window.addEventListener('touchend', () => { scrubbing = false; });
+
+// ---------- Mode toggle (desktop + mobile) ----------
 modeSchedule.addEventListener('click', () => {
   if (!modeSchedule.classList.contains('active')) toggleMode(false);
 });
 modeLive.addEventListener('click', () => {
   if (!modeLive.classList.contains('active')) toggleMode(true);
+});
+// Mobile buttons (in player footer)
+modeScheduleMob.addEventListener('click', () => {
+  if (!modeScheduleMob.classList.contains('active')) toggleMode(false);
+});
+modeLiveMob.addEventListener('click', () => {
+  if (!modeLiveMob.classList.contains('active')) toggleMode(true);
 });
 
 const LIVE_REFRESH_MS = 15000;
@@ -348,7 +377,9 @@ function formatAgo(ms) {
 function updateLiveStatus() {
   if (!anim.liveMode) return;
   const elapsed = Date.now() - liveLastFetch;
-  liveFresh.textContent = liveLastError ? 'refresh failed' : formatAgo(elapsed);
+  const agoText = liveLastError ? 'refresh failed' : formatAgo(elapsed);
+  liveFresh.textContent = agoText;
+  liveFreshMob.textContent = agoText;
   const remaining = Math.max(0, LIVE_REFRESH_MS - elapsed);
   liveCountdown.textContent = `next in ${Math.ceil(remaining / 1000)}s`;
 }
@@ -368,18 +399,29 @@ async function refreshLiveOnce() {
 
 async function toggleMode(live) {
   if (live) {
+    // Desktop buttons
     modeLive.classList.add('active'); modeSchedule.classList.remove('active');
+    // Mobile buttons
+    modeLiveMob.classList.add('active'); modeScheduleMob.classList.remove('active');
+
     anim.setLiveMode(true);
     statsLive.hidden = false;
+    statsLiveMob.hidden = false;
     liveFresh.textContent = 'fetching…';
+    liveFreshMob.textContent = 'fetching…';
     liveCountdown.textContent = '';
     await refreshLiveOnce();
     liveInterval = setInterval(refreshLiveOnce, LIVE_REFRESH_MS);
     liveCountdownInterval = setInterval(updateLiveStatus, 1000);
   } else {
+    // Desktop buttons
     modeSchedule.classList.add('active'); modeLive.classList.remove('active');
+    // Mobile buttons
+    modeScheduleMob.classList.add('active'); modeLiveMob.classList.remove('active');
+
     anim.setLiveMode(false);
     statsLive.hidden = true;
+    statsLiveMob.hidden = true;
     if (liveInterval) { clearInterval(liveInterval); liveInterval = null; }
     if (liveCountdownInterval) { clearInterval(liveCountdownInterval); liveCountdownInterval = null; }
   }

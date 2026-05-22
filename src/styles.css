@@ -518,7 +518,8 @@ html, body {
   background: var(--accent); color: var(--bg-deep); border-color: var(--accent);
   box-shadow: 0 0 16px rgba(0, 229, 255, 0.4);
 }
-#modeLive.active {
+#modeLive.active,
+#modeLiveMob.active {
   background: var(--error); border-color: var(--error); color: white;
   box-shadow: 0 0 16px rgba(255, 85, 119, 0.5);
   animation: live-pulse 1.5s ease-in-out infinite;
@@ -802,6 +803,7 @@ html, body {
   position: relative; cursor: pointer;
   margin-bottom: 18px;
   border-radius: 2px;
+  touch-action: none;
 }
 .timeline-fill {
   position: absolute; left: 0; top: 0; bottom: 0;
@@ -876,6 +878,31 @@ html, body {
 }
 .station-tooltip.visible { opacity: 1; transform: translateY(0); }
 
+/* ============ STATION DRAG HANDLE (mobile bottom-sheet indicator) ============ */
+.station-drag-handle {
+  display: none;
+  width: 40px; height: 4px;
+  background: var(--border-strong);
+  border-radius: 2px;
+  margin: 0 auto 14px;
+  flex-shrink: 0;
+}
+
+/* ============ MOBILE MODE ROW (inside player footer) ============ */
+.player-row-mobile {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.player-live-mobile {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--fg-mute);
+  display: flex; align-items: center; gap: 5px;
+}
+.player-live-mobile[hidden] { display: none !important; }
+
 /* ============ ATTRIBUTION ============ */
 .attrib {
   position: absolute; right: 28px; bottom: 130px; z-index: 9;
@@ -887,17 +914,161 @@ html, body {
 .attrib a:hover { color: var(--accent); }
 
 /* ============ RESPONSIVE ============ */
+
+/* --- Large tablet: hide weather widget, nudge search (≤ 1100px) --- */
+@media (max-width: 1100px) {
+  .weather { display: none; }
+  .search-wrap { right: 28px; width: 260px; }
+}
+
+/* --- Tablet / landscape phone (≤ 900px) --- */
 @media (max-width: 900px) {
-  .intro-title { font-size: 52px; }
-  .intro-inner { padding: 24px; }
+  /* Intro */
+  .intro-inner { max-width: 100%; padding: 36px 28px; }
+  .intro-title { font-size: 48px; }
+  .intro-sub { font-size: 14px; margin-bottom: 32px; }
+
+  /* HUD */
+  .hud-top { padding: 14px 18px; }
+  .clock { font-size: 28px; }
+  .phase { font-size: 10px; margin-top: 4px; letter-spacing: 0.05em; }
+
+  /* Search: full-width strip below HUD */
+  .search-wrap { left: 14px; right: 14px; top: 72px; width: auto; }
+  .search-box { font-size: 16px; } /* prevent iOS auto-zoom on focus */
+  .search-results { max-height: 240px; }
+
+  /* Alert banner: wider */
+  .alert-banner { max-width: 88vw; top: 24px; }
+  .alert-text { max-width: calc(86vw - 90px); }
+
+  /* Hide desktop-only panels */
   .stats { display: none; }
-  .station-panel { width: calc(100% - 56px); transform: translateY(-100%); }
-  .station-panel.visible { transform: translateY(0); }
-  .narrative { max-width: calc(100% - 56px); bottom: 220px; }
-  .narrative-text { font-size: 15px; }
-  .clock { font-size: 30px; }
-  .player { padding: 14px 16px 18px; }
-  .player-lines { flex-wrap: wrap; }
-  .attrib { display: none; }
   .sparkline-wrap { display: none; }
+  .attrib { display: none; }
+
+  /* Narrative: anchored above player */
+  .narrative { left: 14px; right: 14px; max-width: none; bottom: 236px; }
+  .narrative-text { font-size: 15px; }
+
+  /* Station panel: bottom sheet -------------------------------- */
+  .station-panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+    border-left: 1px solid var(--border-strong);
+    border-right: 1px solid var(--border-strong);
+    border-top: 1px solid var(--border-strong);
+    border-bottom: none;
+    max-height: 72vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 24px calc(20px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.55);
+    transform: translateY(100%);
+    opacity: 1;
+    transition: transform 0.42s cubic-bezier(.4,0,.2,1);
+  }
+  .station-panel.visible { transform: translateY(0); }
+  .station-drag-handle { display: block; }
+  .station-arrivals { max-height: none; }
+
+  /* No hover tooltip on touch devices */
+  .station-tooltip { display: none; }
+
+  /* Player */
+  .player {
+    padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+    gap: 10px;
+  }
+  .player-lines { gap: 6px; justify-content: center; }
+  .line-toggle { padding: 7px 12px; font-size: 10px; }
+
+  /* Mobile mode row: show */
+  .player-row-mobile { display: flex; }
+
+  /* Timeline: play btn + timeline on row 1, speed buttons wrap to row 2 */
+  .player-main { flex-wrap: wrap; gap: 10px 12px; }
+  .player-timeline { order: 1; }
+  .player-speed {
+    order: 2;
+    width: 100%;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  /* Bigger touch targets */
+  .player-btn { width: 50px; height: 50px; }
+  .timeline-track { height: 6px; margin-bottom: 22px; }
+  .timeline-thumb { width: 20px; height: 20px; border-width: 2.5px; }
+  .speed-btn { padding: 9px 11px; min-width: 46px; }
+}
+
+/* --- Portrait phone (≤ 600px) --- */
+@media (max-width: 600px) {
+  /* Intro */
+  .intro-title { font-size: 38px; }
+  .intro-inner { padding: 28px 20px; }
+  .intro-sub { font-size: 13px; margin-bottom: 28px; }
+  .intro-start { padding: 14px 44px; }
+  .intro-credit { font-size: 9px; }
+
+  /* HUD: compact */
+  .hud-top { padding: 12px 14px; }
+  .brand-sub { display: none; }
+  .brand-mark .dot { width: 7px; height: 7px; }
+  .brand-title { font-size: 14px; }
+  .clock { font-size: 22px; gap: 5px; }
+  .clock-ampm { font-size: 10px; }
+  .phase { font-size: 9px; margin-top: 3px; }
+
+  /* Search */
+  .search-wrap { top: 62px; left: 10px; right: 10px; }
+
+  /* Alert banner */
+  .alert-banner {
+    max-width: 94vw;
+    padding: 8px 12px;
+    font-size: 10px;
+    top: 18px;
+    gap: 8px;
+  }
+  .alert-text { max-width: calc(94vw - 80px); }
+
+  /* Narrative */
+  .narrative { left: 10px; right: 10px; bottom: 222px; padding: 12px 14px; }
+  .narrative-text { font-size: 13px; }
+  .narrative-time { font-size: 9px; }
+
+  /* Station panel */
+  .station-panel { padding: 0 18px calc(16px + env(safe-area-inset-bottom, 0px)); }
+  .station-name { font-size: 20px; }
+
+  /* Player */
+  .player { padding: 10px 12px calc(12px + env(safe-area-inset-bottom, 0px)); gap: 8px; }
+  .player-lines { gap: 5px; }
+  .line-toggle { padding: 6px 10px; font-size: 9px; }
+  .line-toggle::before { width: 6px; height: 6px; }
+  .player-btn { width: 46px; height: 46px; }
+  .speed-btn { padding: 8px 8px; min-width: 40px; font-size: 10px; }
+
+  /* Timeline: only show 12a, 12p, 12a markers on small screens */
+  .timeline-markers span { display: none; }
+  .timeline-markers span[style="left:0%"],
+  .timeline-markers span[style="left:50%"],
+  .timeline-markers span[style="left:100%"] { display: block; }
+}
+
+/* --- Very small phone (≤ 380px) --- */
+@media (max-width: 380px) {
+  .intro-title { font-size: 32px; }
+  .hud-top { padding: 10px 12px; }
+  .clock { font-size: 20px; }
+  .search-wrap { top: 58px; left: 8px; right: 8px; }
+  .player { padding: 8px 10px calc(10px + env(safe-area-inset-bottom, 0px)); gap: 7px; }
+  .line-toggle { padding: 5px 9px; font-size: 9px; }
+  .speed-btn { padding: 7px 7px; min-width: 36px; }
 }
