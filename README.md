@@ -1,8 +1,12 @@
 # Boston Breathes T. MBTA Ridership Flow
 
-An animated visualization of Boston MBTA subway system pulsing through a full 24-hour day. Every particle is a real, scheduled train. Every flow is built from live MBTA data. No fallbacks, no synthetic fixtures.
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-boston--t--flow-00E5FF?style=flat-square&logo=googlechrome&logoColor=black)](https://nirmitsachde.github.io/boston-t-flow/)
+[![deck.gl](https://img.shields.io/badge/deck.gl-9.0-005B99?style=flat-square&logo=mapbox&logoColor=white)](https://deck.gl)
+[![MapLibre](https://img.shields.io/badge/MapLibre-GL%20JS-396CB2?style=flat-square&logo=maplibre&logoColor=white)](https://maplibre.org)
+[![MBTA API](https://img.shields.io/badge/Data-MBTA%20V3%20API-DA291C?style=flat-square)](https://api-v3.mbta.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](https://opensource.org/licenses/MIT)
 
-![Concept](https://img.shields.io/badge/data-MBTA%20V3%20API-DA291C) ![Stack](https://img.shields.io/badge/stack-deck.gl%20%2B%20MapLibre-003DA5)
+An animated visualization of Boston MBTA subway system pulsing through a full 24-hour day. Every particle is a real, scheduled train. Every flow is built from live MBTA data. No fallbacks, no synthetic fixtures.
 
 ## What it does
 
