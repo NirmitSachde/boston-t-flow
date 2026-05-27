@@ -186,29 +186,37 @@ async function resolveMissingStops(missingIds, stops) {
 }
 
 // =====================================================================
-// Step 4: Schedules . batched across all routes, sampled across time-of-day
-//   We pull multiple time windows so we get diverse trip coverage.
+// Step 4: Schedules fetched PER LINE GROUP, not all routes together.
+//
+//   Bug context: the MBTA API returns schedules sorted by an internal
+//   trip-ID ordering that consistently puts Green-C/D/E trips first.
+//   Batching all 7 routes in one call filled the 2000-slot page limit
+//   entirely with Green trips, leaving Red/Orange/Blue with zero entries.
+//
+//   Fix: each line group gets its own independent query so no single
+//   group can crowd out another through pagination.
 // =====================================================================
-async function loadSchedulesAll(date) {
-  // Time windows tuned to maximize trip diversity at low call count
-  const windows = [
-    { min: '05:00', max: '08:30' },
-    { min: '08:30', max: '12:00' },
-    { min: '12:00', max: '15:30' },
-    { min: '15:30', max: '19:00' },
-    { min: '19:00', max: '23:00' },
-    { min: '23:00', max: '27:00' }
-  ];
 
+const SCHEDULE_WINDOWS = [
+  { min: '05:00', max: '08:30' },
+  { min: '08:30', max: '12:00' },
+  { min: '12:00', max: '15:30' },
+  { min: '15:30', max: '19:00' },
+  { min: '19:00', max: '23:00' },
+  { min: '23:00', max: '27:00' }
+];
+
+// Fetch schedules for one group of routes across all time windows.
+async function loadSchedulesForGroup(routesCsv, date) {
   const byTrip = new Map();
 
-  for (const w of windows) {
+  for (const w of SCHEDULE_WINDOWS) {
     const url =
-      `/schedules?filter%5Broute%5D=${ROUTES_CSV}` +
+      `/schedules?filter%5Broute%5D=${routesCsv}` +
       `&filter%5Bdate%5D=${date}` +
       `&filter%5Bmin_time%5D=${w.min}` +
       `&filter%5Bmax_time%5D=${w.max}` +
-      `&page%5Blimit%5D=2000`;
+      `&page%5Blimit%5D=500`;
     const json = await api(url);
     for (const s of (json.data || [])) {
       const tripId = s.relationships?.trip?.data?.id;
@@ -236,6 +244,15 @@ async function loadSchedulesAll(date) {
   }
   return Array.from(byTrip.values());
 }
+
+// One group per line. Green's 4 branches share one group so they still
+// get 500 results per window — plenty to animate the full network.
+const SCHEDULE_GROUPS = [
+  'Red',
+  'Orange',
+  'Blue',
+  'Green-B,Green-C,Green-D,Green-E'
+];
 
 // =====================================================================
 // Step 5: Bind each trip to its route. We don't get route directly from
@@ -346,7 +363,12 @@ export async function loadAllMBTAData(progressCb = () => {}) {
   const { stops, parents: parentStops } = await loadAllStops();
 
   tick('Fetching schedules for today…');
-  const trips = await loadSchedulesAll(date);
+  const schedParts = [];
+  for (const group of SCHEDULE_GROUPS) {
+    const part = await loadSchedulesForGroup(group, date);
+    schedParts.push(...part);
+  }
+  const trips = schedParts;
 
   tick('Resolving trip metadata…');
   const tripIds = trips.map(t => t.tripId);

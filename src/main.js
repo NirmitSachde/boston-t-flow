@@ -1,6 +1,6 @@
 // Main entry. Real MBTA data, deck.gl animation, full interactivity.
 
-import { loadAllMBTAData, loadLiveVehicles, loadAlerts, loadPredictions, LINES } from './mbta.js';
+import { loadAllMBTAData, loadLiveVehicles, loadAlerts, loadPredictions, LINES } from './mbta.js?v=2';
 import { FlowAnimation } from './animation.js';
 import { PHASES, MOMENTS, getPhase, findActiveMoment, formatClock } from './narrative.js';
 import { loadWeather } from './weather.js';
