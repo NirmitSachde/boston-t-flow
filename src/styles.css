@@ -915,6 +915,19 @@ html, body {
 
 /* ============ RESPONSIVE ============ */
 
+/* --- Wide desktop (> 1100px): alert sits between weather and clock so the
+       two glass pills don't overlap. Center it within the available space
+       rather than the full viewport. --- */
+@media (min-width: 1101px) {
+  .alert-banner {
+    /* Available space: from ~545px (after weather, which ends at ~540) to
+       ~(100vw - 200px) (before clock). Center of that band = 50vw + 177.
+       Using 180 leaves a clean ~20px gap from the weather pill. */
+    left: calc(50vw + 180px);
+    max-width: calc(100vw - 800px);
+  }
+}
+
 /* --- Large tablet: hide weather widget, nudge search (≤ 1100px) --- */
 @media (max-width: 1100px) {
   .weather { display: none; }
